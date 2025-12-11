@@ -85,7 +85,15 @@ const Dashboard = () => {
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">So'nggi Mahsulotlar</h3>
           <div className="space-y-3">
-            {products.slice(0, 5).map((product: any) => (
+            {[...products]
+              .sort((a: any, b: any) => {
+                // Sort by createdAt or updatedAt (newest first)
+                const dateA = a.createdAt ? new Date(a.createdAt).getTime() : (a.updatedAt ? new Date(a.updatedAt).getTime() : 0);
+                const dateB = b.createdAt ? new Date(b.createdAt).getTime() : (b.updatedAt ? new Date(b.updatedAt).getTime() : 0);
+                return dateB - dateA;
+              })
+              .slice(0, 5)
+              .map((product: any) => (
               <div
                 key={product.id}
                 className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg"
@@ -108,9 +116,17 @@ const Dashboard = () => {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Kategoriyalar</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">So'ngi Kategoriyalar</h3>
           <div className="space-y-3">
-            {categories.slice(0, 5).map((category: any) => (
+            {[...categories]
+              .sort((a: any, b: any) => {
+                // Sort by createdAt or updatedAt (newest first)
+                const dateA = a.createdAt ? new Date(a.createdAt).getTime() : (a.updatedAt ? new Date(a.updatedAt).getTime() : 0);
+                const dateB = b.createdAt ? new Date(b.createdAt).getTime() : (b.updatedAt ? new Date(b.updatedAt).getTime() : 0);
+                return dateB - dateA;
+              })
+              .slice(0, 5)
+              .map((category: any) => (
               <div
                 key={category.id}
                 className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg"
