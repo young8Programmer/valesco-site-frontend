@@ -13,14 +13,15 @@ const LoginPage = () => {
 
   useEffect(() => {
     console.log('Auth changed:', auth);
-    if (auth && auth.token) {
+    if (auth && auth.token && !loading) {
       console.log('Auth is valid, navigating to dashboard...');
       // Small delay to ensure state is fully updated
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         navigate('/', { replace: true });
       }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [auth, navigate]);
+  }, [auth, navigate, loading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,22 +30,41 @@ const LoginPage = () => {
     const currentUsername = username;
     const currentPassword = password;
     
+    if (!currentUsername || !currentPassword) {
+      toast.error('Login va parolni kiriting');
+      return;
+    }
+    
     setLoading(true);
     console.log('Form submitted with:', { username: currentUsername, password: '***' });
 
     try {
       await login({ username: currentUsername, password: currentPassword });
       console.log('Login function completed, waiting for auth state update...');
-      toast.success('Muvaffaqiyatli kirildi!');
-      // Inputlarni faqat muvaffaqiyatli login bo'lsa tozalash
-      setUsername('');
-      setPassword('');
-      // Don't set loading to false here, let useEffect handle navigation
+      
+      // Wait a bit for state to update
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Check if auth is set
+      if (auth && auth.token) {
+        toast.success('Muvaffaqiyatli kirildi!');
+        setUsername('');
+        setPassword('');
+      } else {
+        // If auth is not set after login, something went wrong
+        throw new Error('Kirish muvaffaqiyatsiz');
+      }
     } catch (error: any) {
       console.error('Login failed:', error);
-      // Faqat umumiy xatolik xabari ko'rsatamiz, maxfiy ma'lumot bermaymiz
-      toast.error('Login yoki parol noto\'g\'ri');
       setLoading(false);
+      
+      // Show appropriate error message
+      const errorMessage = error?.message || 'Login yoki parol noto\'g\'ri';
+      if (errorMessage.includes('Vaqt tugadi') || errorMessage.includes('Tarmoq')) {
+        toast.error(errorMessage);
+      } else {
+        toast.error('Login yoki parol noto\'g\'ri');
+      }
       // Xato bo'lsa inputlarni tozalamaymiz, foydalanuvchi qayta urinishi uchun
     }
   };

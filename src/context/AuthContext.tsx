@@ -38,7 +38,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       localStorage.clear();
       sessionStorage.clear();
 
-      const results = await authService.loginParallel(credentials);
+      // Add timeout wrapper
+      const loginPromise = authService.loginParallel(credentials);
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Vaqt tugadi. Qayta urinib ko\'ring.')), 30000);
+      });
+
+      const results = await Promise.race([loginPromise, timeoutPromise]);
       console.log('Login results:', results);
 
       // Determine which site to use
@@ -62,6 +68,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (!selectedAuth || !selectedAuth.token) {
         console.error('No valid auth result from either site', results);
+        setLoading(false);
         throw new Error('Login yoki parol noto\'g\'ri');
       }
 
@@ -73,12 +80,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setAuth(selectedAuth);
       console.log('Auth state updated');
       
+      // Small delay to ensure state is updated
+      await new Promise(resolve => setTimeout(resolve, 100));
       setLoading(false);
     } catch (error: any) {
       console.error('Login error:', error);
       setLoading(false);
       // Re-throw with better error message
-      const errorMessage = error?.response?.data?.message || error?.message || 'Login yoki parol noto\'g\'ri';
+      const errorMessage = error?.message || error?.response?.data?.message || 'Login yoki parol noto\'g\'ri';
       throw new Error(errorMessage);
     }
   };

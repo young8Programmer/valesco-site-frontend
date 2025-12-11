@@ -9,29 +9,33 @@ export interface LoginCredentials {
 
 export const authService = {
   async loginGPG(credentials: LoginCredentials): Promise<AuthResponse> {
+    console.log('[AuthService] Attempting GPG login...');
     const client = createApiClient('gpg');
-    const response = await client.post('/auth/login', {
-      login: credentials.login || credentials.username,
-      password: credentials.password,
-    });
-    return response.data;
+    try {
+      const response = await client.post('/auth/login', {
+        login: credentials.login || credentials.username,
+        password: credentials.password,
+      });
+      console.log('[AuthService] GPG login response received:', response.status);
+      return response.data;
+    } catch (error: any) {
+      console.error('[AuthService] GPG login error:', error);
+      throw error;
+    }
   },
 
   async loginValesco(credentials: LoginCredentials): Promise<AuthResponse> {
+    console.log('[AuthService] Attempting Valesco login...');
     const client = createApiClient('valesco');
     try {
       const response = await client.post('/auth/login', {
         username: credentials.username || credentials.login,
         password: credentials.password,
       });
-      console.log('Valesco login response:', response.data);
+      console.log('[AuthService] Valesco login response received:', response.status);
       return response.data;
     } catch (error: any) {
-      console.error('Valesco login error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
+      console.error('[AuthService] Valesco login error:', error);
       throw error;
     }
   },
@@ -75,19 +79,24 @@ export const authService = {
         }),
     ];
 
-    const responses = await Promise.allSettled(promises);
-    console.log('All login responses:', responses);
+    try {
+      const responses = await Promise.allSettled(promises);
+      console.log('All login responses:', responses);
 
-    responses.forEach((response) => {
-      if (response.status === 'fulfilled' && response.value) {
-        results[response.value.site] = response.value.data;
-      } else if (response.status === 'rejected') {
-        console.error('Login promise rejected:', response.reason);
-      }
-    });
+      responses.forEach((response) => {
+        if (response.status === 'fulfilled' && response.value) {
+          results[response.value.site] = response.value.data;
+        } else if (response.status === 'rejected') {
+          console.error('Login promise rejected:', response.reason);
+        }
+      });
 
-    console.log('Final login results:', results);
-    return results;
+      console.log('Final login results:', results);
+      return results;
+    } catch (error: any) {
+      console.error('Login parallel error:', error);
+      throw new Error('Tarmoq xatosi. Internet aloqasini tekshiring.');
+    }
   },
 
   logout() {
