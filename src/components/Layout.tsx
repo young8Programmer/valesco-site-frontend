@@ -100,7 +100,9 @@ const Layout = () => {
           <div className="flex items-center justify-between p-6 border-b">
             <div className="flex items-center space-x-2">
               <Globe className="w-8 h-8 text-primary-600" />
-              <span className="text-xl font-bold text-gray-900">Admin Panel</span>
+              <span className="text-xl font-bold text-gray-900">
+                {auth?.site === 'gpg' ? 'GPG' : auth?.site === 'valesco' ? 'Valesco' : 'Admin Panel'}
+              </span>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
