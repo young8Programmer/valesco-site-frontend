@@ -142,11 +142,11 @@ const CategoriesPage = () => {
   }
 
   return (
-    <div>
-      <div className="mb-6">
+    <div className="w-full max-w-full overflow-x-hidden">
+      <div className="mb-4 sm:mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900">Kategoriyalar</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Kategoriyalar</h2>
             <p className="text-gray-600 mt-1">Barcha kategoriyalarni boshqaring</p>
           </div>
           <div className="flex items-center space-x-2">
@@ -194,7 +194,7 @@ const CategoriesPage = () => {
       </div>
 
       {/* Search */}
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
@@ -253,9 +253,16 @@ const CategoriesPage = () => {
               const images = category.images || [];
               if (images.length > 0) {
                 const firstImage = images[0];
-                categoryImage = firstImage.startsWith('http') || firstImage.startsWith('/')
-                  ? firstImage
-                  : `https://gpg-backend-vgrz.onrender.com/upload/categories/${firstImage}`;
+                // Backend returns full URL (e.g., https://gpg-backend-vgrz.onrender.com/1234567890-123456789.jpg)
+                // or just filename (e.g., 1234567890-123456789.jpg)
+                if (firstImage.startsWith('http://') || firstImage.startsWith('https://')) {
+                  categoryImage = firstImage;
+                } else if (firstImage.startsWith('/')) {
+                  categoryImage = `https://gpg-backend-vgrz.onrender.com${firstImage}`;
+                } else {
+                  // Just filename - backend saves directly to upload root, not in subfolders
+                  categoryImage = `https://gpg-backend-vgrz.onrender.com/${firstImage}`;
+                }
               }
             } else {
               // Valesco: single image

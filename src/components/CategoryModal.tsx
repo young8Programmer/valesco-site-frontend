@@ -237,9 +237,23 @@ const CategoryModal = ({ category, onClose, onSuccess }: CategoryModalProps) => 
             {existingImages.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">
                 {existingImages.map((img, idx) => {
-                  const imageUrl = img.startsWith('http') || img.startsWith('/') 
-                    ? img 
-                    : `${auth?.site === 'gpg' ? 'https://gpg-backend-vgrz.onrender.com' : 'https://backend.valescooil.com'}/upload/categories/${img}`;
+                  // Backend returns full URL or just filename
+                  let imageUrl: string;
+                  if (auth?.site === 'gpg') {
+                    if (img.startsWith('http://') || img.startsWith('https://')) {
+                      imageUrl = img;
+                    } else if (img.startsWith('/')) {
+                      imageUrl = `https://gpg-backend-vgrz.onrender.com${img}`;
+                    } else {
+                      // Just filename - backend saves directly to upload root
+                      imageUrl = `https://gpg-backend-vgrz.onrender.com/${img}`;
+                    }
+                  } else {
+                    // Valesco
+                    imageUrl = img.startsWith('http') || img.startsWith('/') 
+                      ? img 
+                      : `https://backend.valescooil.com/upload/categories/${img}`;
+                  }
                   return (
                     <div key={idx} className="relative">
                       <img 
@@ -247,6 +261,7 @@ const CategoryModal = ({ category, onClose, onSuccess }: CategoryModalProps) => 
                         alt="Existing" 
                         className="w-32 h-32 object-cover rounded"
                         onError={(e) => {
+                          console.error('Image load error:', imageUrl);
                           if (!img.startsWith('http')) {
                             (e.target as HTMLImageElement).src = img;
                           }

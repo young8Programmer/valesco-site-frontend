@@ -1,8 +1,9 @@
 import { useAuth } from '../context/AuthContext';
-import { Package, FolderTree, Image } from 'lucide-react';
+import { Package, FolderTree, Image, Tag } from 'lucide-react';
 import { useQuery } from 'react-query';
 import { productService } from '../services/product.service';
 import { categoryService } from '../services/category.service';
+import { brandService } from '../services/brand.service';
 
 const Dashboard = () => {
   const { auth } = useAuth();
@@ -25,6 +26,15 @@ const Dashboard = () => {
     { enabled: !!auth?.site && !!auth?.token }
   );
 
+  const { data: brands = [] } = useQuery(
+    ['brands', auth?.site, auth?.token],
+    () => {
+      if (!auth?.site || !auth?.token || auth?.site !== 'gpg') return [];
+      return brandService.getAll(auth.site, auth.token);
+    },
+    { enabled: !!auth?.site && !!auth?.token && auth?.site === 'gpg' }
+  );
+
   // Calculate total images
   const totalImages = 
     products.reduce((sum: number, p: any) => {
@@ -40,7 +50,11 @@ const Dashboard = () => {
       } else {
         return sum + (c.img || c.image ? 1 : 0);
       }
-    }, 0);
+    }, 0) +
+    (auth?.site === 'gpg' ? brands.reduce((sum: number, b: any) => {
+      const brandImages = b.images || [];
+      return sum + (Array.isArray(brandImages) ? brandImages.length : 0);
+    }, 0) : 0);
 
   const stats = [
     {
@@ -55,6 +69,12 @@ const Dashboard = () => {
       icon: FolderTree,
       color: 'bg-green-500',
     },
+    ...(auth?.site === 'gpg' ? [{
+      name: 'Jami Brendlar',
+      value: brands.length,
+      icon: Tag,
+      color: 'bg-purple-500',
+    }] : []),
     {
       name: 'Jami Rasmlar',
       value: totalImages,
@@ -64,9 +84,9 @@ const Dashboard = () => {
   ];
 
   return (
-    <div>
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h2>
+    <div className="w-full max-w-full overflow-x-hidden">
+      <div className="mb-6 sm:mb-8">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Dashboard</h2>
       </div>
 
       {/* Stats Grid */}
