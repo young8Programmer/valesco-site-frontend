@@ -163,12 +163,12 @@ const BrandsPage = () => {
   }
 
   return (
-    <div className="w-full max-w-full overflow-x-hidden">
-      <div className="mb-4 sm:mb-6">
+    <div>
+      <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Brendlar</h2>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">Barcha brendlarni boshqaring</p>
+            <h2 className="text-3xl font-bold text-gray-900">Brendlar</h2>
+            <p className="text-gray-600 mt-1">Barcha brendlarni boshqaring</p>
           </div>
           <div className="flex items-center space-x-2">
             {selectedBrands.length > 0 && (
@@ -238,7 +238,7 @@ const BrandsPage = () => {
       </div>
 
       {/* Search */}
-      <div className="mb-4 sm:mb-6">
+      <div className="mb-6">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input

@@ -93,8 +93,8 @@ const Layout = () => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-40 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        className={`fixed top-0 left-0 z-40 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex flex-col h-full">
@@ -159,30 +159,30 @@ const Layout = () => {
       </aside>
 
       {/* Main content */}
-      <div className={`transition-all duration-300 w-full ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}`}>
+      <div className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}`}>
         {/* Top bar */}
-        <header className="bg-white shadow-sm sticky top-0 z-40 w-full">
-          <div className="flex items-center justify-between px-4 sm:px-6 py-4 relative w-full">
-            <div className="flex items-center space-x-2 sm:space-x-4 flex-1 min-w-0">
+        <header className="bg-white shadow-sm sticky top-0 z-40">
+          <div className="flex items-center justify-between px-6 py-4 relative">
+            <div className="flex items-center space-x-4">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="text-gray-500 hover:text-gray-700 flex-shrink-0"
+                className="text-gray-500 hover:text-gray-700"
               >
-                <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
+                <Menu className="w-6 h-6" />
               </button>
-              <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 truncate">
+              <h1 className="text-2xl font-bold text-gray-900">
                 {navItems.find((item) => isActive(item.path))?.label || 'Dashboard'}
               </h1>
             </div>
-            <div className="relative z-50 flex-shrink-0" ref={userMenuRef}>
+            <div className="relative z-50" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center space-x-1 sm:space-x-2 p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition"
+                className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition"
               >
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
-                  <User className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="w-5 h-5 text-white" />
                 </div>
-                <div className="hidden md:flex flex-col items-start max-w-[120px] lg:max-w-[150px]">
+                <div className="hidden md:flex flex-col items-start max-w-[150px]">
                   <span className="text-sm font-medium text-gray-900 truncate w-full">
                     {auth?.user?.username || auth?.user?.login || 'Admin'}
                   </span>
@@ -192,17 +192,14 @@ const Layout = () => {
                       : 'Admin'}
                   </span>
                 </div>
-                <ChevronDown className={`w-3 h-3 sm:w-4 sm:h-4 text-gray-500 transition-transform flex-shrink-0 ${userMenuOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform flex-shrink-0 ${userMenuOpen ? 'rotate-180' : ''}`} />
               </button>
               
               {userMenuOpen && (
                 <div 
                   ref={dropdownRef}
                   className={`absolute ${dropdownPosition === 'right' ? 'right-0' : 'left-0'} top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-[100]`}
-                  style={{ 
-                    maxWidth: 'calc(100vw - 2rem)',
-                    minWidth: '200px'
-                  }}
+                  style={{ maxWidth: 'calc(100vw - 2rem)' }}
                 >
                   <div className="px-4 py-2 border-b border-gray-100">
                     <p className="text-sm font-medium text-gray-900 break-words">
@@ -241,10 +238,8 @@ const Layout = () => {
         </header>
 
         {/* Page content */}
-        <main className="p-4 sm:p-6 w-full overflow-x-hidden">
-          <div className="w-full max-w-full">
-            <Outlet />
-          </div>
+        <main className="p-6">
+          <Outlet />
         </main>
       </div>
     </div>
