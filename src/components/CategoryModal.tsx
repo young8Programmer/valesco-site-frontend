@@ -56,22 +56,50 @@ const CategoryModal = ({ category, onClose, onSuccess }: CategoryModalProps) => 
     e.preventDefault();
     if (!auth?.site || !auth?.token) return;
 
+    // Validate required fields
+    if (auth.site === 'gpg') {
+      if (!formData.nameRu || formData.nameRu.trim() === '') {
+        toast.error('Nomi (RU) majburiy');
+        return;
+      }
+    } else {
+      if (!formData.name || formData.name.trim() === '') {
+        toast.error('Nomi majburiy');
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const formDataToSend = new FormData();
 
       // Add form fields based on site
       if (auth.site === 'gpg') {
-        if (formData.nameRu) formDataToSend.append('nameRu', formData.nameRu);
-        if (formData.nameEn) formDataToSend.append('nameEn', formData.nameEn);
-        if (formData.descriptionRu) formDataToSend.append('descriptionRu', formData.descriptionRu);
-        if (formData.descriptionEn) formDataToSend.append('descriptionEn', formData.descriptionEn);
+        formDataToSend.append('nameRu', formData.nameRu.trim());
+        if (formData.nameEn && formData.nameEn.trim()) {
+          formDataToSend.append('nameEn', formData.nameEn.trim());
+        }
+        if (formData.descriptionRu && formData.descriptionRu.trim()) {
+          formDataToSend.append('descriptionRu', formData.descriptionRu.trim());
+        }
+        if (formData.descriptionEn && formData.descriptionEn.trim()) {
+          formDataToSend.append('descriptionEn', formData.descriptionEn.trim());
+        }
         // GPG supports multiple images - send only new images
         images.forEach((img) => {
           formDataToSend.append('images', img);
         });
+        
+        // Debug: Log FormData contents
+        console.log('Sending category data:', {
+          nameRu: formData.nameRu.trim(),
+          nameEn: formData.nameEn?.trim(),
+          descriptionRu: formData.descriptionRu?.trim(),
+          descriptionEn: formData.descriptionEn?.trim(),
+          imagesCount: images.length,
+        });
       } else {
-        if (formData.name) formDataToSend.append('name', formData.name);
+        formDataToSend.append('name', formData.name.trim());
         if (images.length > 0) {
           formDataToSend.append('img', images[0]);
         }
@@ -91,7 +119,12 @@ const CategoryModal = ({ category, onClose, onSuccess }: CategoryModalProps) => 
       setImagePreviews([]);
       onSuccess();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Xatolik yuz berdi');
+      console.error('Category creation error:', error);
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          error.message || 
+                          'Xatolik yuz berdi';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
