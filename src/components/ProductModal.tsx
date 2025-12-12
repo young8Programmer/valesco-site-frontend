@@ -43,7 +43,9 @@ const ProductModal = ({ product, categories, brands = [], onClose, onSuccess }: 
         categoryId: product.categoryId?.toString() || '',
         brandId: product.brandId?.toString() || '',
       });
-      setExistingImages(product.images || product.image || []);
+      // GPG uses images array, Valesco uses image array
+      const productImages = product.images || product.image || [];
+      setExistingImages(Array.isArray(productImages) ? productImages : [productImages].filter(Boolean));
     }
   }, [product]);
 
@@ -61,7 +63,6 @@ const ProductModal = ({ product, categories, brands = [], onClose, onSuccess }: 
         if (formData.nameEn) formDataToSend.append('nameEn', formData.nameEn);
         if (formData.descriptionRu) formDataToSend.append('descriptionRu', formData.descriptionRu);
         if (formData.descriptionEn) formDataToSend.append('descriptionEn', formData.descriptionEn);
-        if (formData.categoryId) formDataToSend.append('categoryId', formData.categoryId);
         if (formData.brandId) formDataToSend.append('brandId', formData.brandId);
       } else {
         if (formData.title) formDataToSend.append('title', formData.title);
@@ -157,39 +158,40 @@ const ProductModal = ({ product, categories, brands = [], onClose, onSuccess }: 
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Kategoriya *
-            </label>
-            <select
-              required
-              value={formData.categoryId}
-              onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-            >
-              <option value="">Tanlang</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.nameRu || cat.name || cat.nameEn}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {auth?.site === 'gpg' && brands.length > 0 && (
+          {auth?.site === 'gpg' ? (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Brend
+                Brend *
               </label>
               <select
+                required
                 value={formData.brandId}
                 onChange={(e) => setFormData({ ...formData, brandId: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
               >
-                <option value="">Brend tanlang (ixtiyoriy)</option>
+                <option value="">Brend tanlang</option>
                 {brands.map((brand) => (
                   <option key={brand.id} value={brand.id}>
                     {brand.nameRu || brand.name || brand.nameEn}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Kategoriya *
+              </label>
+              <select
+                required
+                value={formData.categoryId}
+                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+              >
+                <option value="">Tanlang</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.nameRu || cat.name || cat.nameEn}
                   </option>
                 ))}
               </select>
@@ -234,9 +236,26 @@ const ProductModal = ({ product, categories, brands = [], onClose, onSuccess }: 
             </div>
             {existingImages.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">
-                {existingImages.map((img, idx) => (
-                  <img key={idx} src={img} alt="Existing" className="w-16 h-16 object-cover rounded" />
-                ))}
+                {existingImages.map((img, idx) => {
+                  // Handle both full URLs and relative paths
+                  const imageUrl = img.startsWith('http') || img.startsWith('/') 
+                    ? img 
+                    : `${auth?.site === 'gpg' ? 'https://gpg-backend-vgrz.onrender.com' : 'https://backend.valescooil.com'}/upload/products/${img}`;
+                  return (
+                    <img 
+                      key={idx} 
+                      src={imageUrl} 
+                      alt="Existing" 
+                      className="w-16 h-16 object-cover rounded"
+                      onError={(e) => {
+                        // Fallback to direct URL if relative path fails
+                        if (!img.startsWith('http')) {
+                          (e.target as HTMLImageElement).src = img;
+                        }
+                      }}
+                    />
+                  );
+                })}
               </div>
             )}
           </div>

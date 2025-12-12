@@ -246,21 +246,24 @@ const CategoriesPage = () => {
         ) : (
           filteredCategories.map((category: Category) => {
             const isSelected = selectedCategories.includes(category.id);
-            // Valesco uses 'img', GPG uses 'images' array or 'image'
-            const categoryImage = category.img || category.image || category.images?.[0];
+            // Valesco uses 'img', GPG uses 'images' array
+            let categoryImage: string | null = null;
+            if (auth?.site === 'gpg') {
+              // GPG: images is an array
+              const images = category.images || [];
+              if (images.length > 0) {
+                const firstImage = images[0];
+                categoryImage = firstImage.startsWith('http') || firstImage.startsWith('/')
+                  ? firstImage
+                  : `https://gpg-backend-vgrz.onrender.com/upload/categories/${firstImage}`;
+              }
+            } else {
+              // Valesco: single image
+              categoryImage = category.img || category.image || null;
+            }
+            
             // Valesco uses 'title.ru' and 'title.en', GPG uses 'nameRu' and 'nameEn'
             const categoryName = category.nameRu || category.name || category.nameEn || category.title?.ru || category.title?.en || 'Nomsiz';
-            
-            // Debug: log all category data to see what's missing
-            console.log('Category data:', {
-              id: category.id,
-              name: categoryName,
-              img: category.img,
-              image: category.image,
-              images: category.images,
-              categoryImage: categoryImage,
-              fullCategory: category
-            });
             
             return (
             <div
@@ -278,14 +281,10 @@ const CategoriesPage = () => {
                       className="w-full h-full object-contain"
                       onError={(e) => {
                         // If image fails to load, show placeholder
-                        console.error('Image failed to load:', categoryImage, 'for category:', categoryName);
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
                         const placeholder = target.nextElementSibling as HTMLElement;
                         if (placeholder) placeholder.style.display = 'flex';
-                      }}
-                      onLoad={() => {
-                        console.log('Image loaded successfully:', categoryImage);
                       }}
                     />
                     <div className="placeholder w-full h-full flex items-center justify-center absolute inset-0 bg-gray-100" style={{ display: 'none' }}>

@@ -27,8 +27,20 @@ const Dashboard = () => {
 
   // Calculate total images
   const totalImages = 
-    products.reduce((sum: number, p: any) => sum + (p.images?.length || p.image?.length || 0), 0) +
-    categories.reduce((sum: number, c: any) => sum + (c.images?.length || (c.image ? 1 : 0) || (c.img ? 1 : 0)), 0);
+    products.reduce((sum: number, p: any) => {
+      // GPG uses images array, Valesco uses image array
+      const productImages = p.images || p.image || [];
+      return sum + (Array.isArray(productImages) ? productImages.length : (productImages ? 1 : 0));
+    }, 0) +
+    categories.reduce((sum: number, c: any) => {
+      // GPG uses images array, Valesco uses single image (img or image)
+      if (auth?.site === 'gpg') {
+        const categoryImages = c.images || [];
+        return sum + (Array.isArray(categoryImages) ? categoryImages.length : 0);
+      } else {
+        return sum + (c.img || c.image ? 1 : 0);
+      }
+    }, 0);
 
   const stats = [
     {

@@ -5,8 +5,12 @@ export const productService = {
   async getAll(site: SiteType, token: string, filters?: { categoryId?: number; brandId?: number }) {
     const client = createApiClient(site, token);
     const params = new URLSearchParams();
-    if (filters?.categoryId) params.append('categoryId', filters.categoryId.toString());
-    if (filters?.brandId) params.append('brandId', filters.brandId.toString());
+    // GPG uses brandId, Valesco uses categoryId
+    if (site === 'gpg' && filters?.brandId) {
+      params.append('brandId', filters.brandId.toString());
+    } else if (site === 'valesco' && filters?.categoryId) {
+      params.append('categoryId', filters.categoryId.toString());
+    }
     
     const url = `/products${params.toString() ? `?${params.toString()}` : ''}`;
     const response = await client.get(url);
@@ -44,6 +48,7 @@ export const productService = {
     await client.delete(`/products/${id}`);
   },
 };
+
 
 
 

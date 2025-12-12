@@ -21,8 +21,8 @@ const CategoryModal = ({ category, onClose, onSuccess }: CategoryModalProps) => 
     descriptionRu: '',
     descriptionEn: '',
   });
-  const [image, setImage] = useState<File | null>(null);
-  const [existingImage, setExistingImage] = useState<string | null>(null);
+  const [images, setImages] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
 
   useEffect(() => {
     if (category) {
@@ -33,7 +33,9 @@ const CategoryModal = ({ category, onClose, onSuccess }: CategoryModalProps) => 
         descriptionRu: category.descriptionRu || '',
         descriptionEn: category.descriptionEn || '',
       });
-      setExistingImage(category.image || category.images?.[0] || null);
+      // GPG uses images array, Valesco uses single image
+      const categoryImages = category.images || (category.image ? [category.image] : []);
+      setExistingImages(Array.isArray(categoryImages) ? categoryImages : [categoryImages].filter(Boolean));
     }
   }, [category]);
 
@@ -51,13 +53,14 @@ const CategoryModal = ({ category, onClose, onSuccess }: CategoryModalProps) => 
         if (formData.nameEn) formDataToSend.append('nameEn', formData.nameEn);
         if (formData.descriptionRu) formDataToSend.append('descriptionRu', formData.descriptionRu);
         if (formData.descriptionEn) formDataToSend.append('descriptionEn', formData.descriptionEn);
-        if (image) {
-          formDataToSend.append('images', image);
-        }
+        // GPG supports multiple images
+        images.forEach((img) => {
+          formDataToSend.append('images', img);
+        });
       } else {
         if (formData.name) formDataToSend.append('name', formData.name);
-        if (image) {
-          formDataToSend.append('img', image);
+        if (images.length > 0) {
+          formDataToSend.append('img', images[0]);
         }
       }
 
@@ -78,8 +81,14 @@ const CategoryModal = ({ category, onClose, onSuccess }: CategoryModalProps) => 
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setImage(e.target.files[0]);
+    if (e.target.files) {
+      if (auth?.site === 'gpg') {
+        // GPG supports multiple images
+        setImages(Array.from(e.target.files));
+      } else {
+        // Valesco supports single image
+        setImages(e.target.files[0] ? [e.target.files[0]] : []);
+      }
     }
   };
 
@@ -173,22 +182,47 @@ const CategoryModal = ({ category, onClose, onSuccess }: CategoryModalProps) => 
                 <input
                   type="file"
                   accept="image/*"
+                  multiple={auth?.site === 'gpg'}
                   onChange={handleImageChange}
                   className="hidden"
                 />
               </label>
-              {image && (
-                <span className="text-sm text-gray-600">Fayl tanlandi</span>
+              {images.length > 0 && (
+                <span className="text-sm text-gray-600">{images.length} fayl tanlandi</span>
               )}
             </div>
-            {existingImage && !image && (
-              <div className="mt-2">
-                <img src={existingImage} alt="Existing" className="w-32 h-32 object-cover rounded" />
+            {existingImages.length > 0 && images.length === 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {existingImages.map((img, idx) => {
+                  const imageUrl = img.startsWith('http') || img.startsWith('/') 
+                    ? img 
+                    : `${auth?.site === 'gpg' ? 'https://gpg-backend-vgrz.onrender.com' : 'https://backend.valescooil.com'}/upload/categories/${img}`;
+                  return (
+                    <img 
+                      key={idx} 
+                      src={imageUrl} 
+                      alt="Existing" 
+                      className="w-32 h-32 object-cover rounded"
+                      onError={(e) => {
+                        if (!img.startsWith('http')) {
+                          (e.target as HTMLImageElement).src = img;
+                        }
+                      }}
+                    />
+                  );
+                })}
               </div>
             )}
-            {image && (
-              <div className="mt-2">
-                <img src={URL.createObjectURL(image)} alt="Preview" className="w-32 h-32 object-cover rounded" />
+            {images.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {images.map((img, idx) => (
+                  <img 
+                    key={idx} 
+                    src={URL.createObjectURL(img)} 
+                    alt="Preview" 
+                    className="w-32 h-32 object-cover rounded" 
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -216,6 +250,7 @@ const CategoryModal = ({ category, onClose, onSuccess }: CategoryModalProps) => 
 };
 
 export default CategoryModal;
+
 
 
 

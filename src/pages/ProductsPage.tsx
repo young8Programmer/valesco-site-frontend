@@ -17,6 +17,7 @@ const ProductsPage = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<number | null>(null);
+  const [brandFilter, setBrandFilter] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<'id' | 'name'>('id');
 
   const { data: products = [], isLoading } = useQuery(
@@ -103,25 +104,24 @@ const ProductsPage = () => {
 
   const handleExport = () => {
     const headers = auth?.site === 'gpg' 
-      ? ['ID', 'Nomi (RU)', 'Nomi (EN)', 'Kategoriya', 'Brend', 'Rasmlar soni']
+      ? ['ID', 'Nomi (RU)', 'Nomi (EN)', 'Brend', 'Rasmlar soni']
       : ['ID', 'Nomi', 'Kategoriya', 'Rasmlar soni'];
     
     const csvContent = [
       headers.join(','),
       ...filteredProducts.map((p: Product) => {
-        const category = categories.find((c: any) => c.id === p.categoryId);
-        const brand = auth?.site === 'gpg' ? brands.find((b: Brand) => b.id === p.brandId) : null;
-        
         if (auth?.site === 'gpg') {
+          const brand = brands.find((b: Brand) => b.id === p.brandId);
           return [
             p.id,
             `"${p.nameRu || p.title || ''}"`,
             `"${p.nameEn || ''}"`,
-            `"${category ? (category.nameRu || category.name || category.nameEn) : ''}"`,
             `"${brand ? (brand.nameRu || brand.name || brand.nameEn) : ''}"`,
             (p.images?.length || p.image?.length || 0).toString(),
           ].join(',');
         } else {
+          const productCategoryId = p.category?.id || p.categoryId;
+          const category = categories.find((c: any) => c.id === productCategoryId);
           return [
             p.id,
             `"${p.title || p.nameRu || p.nameEn || ''}"`,
@@ -149,27 +149,31 @@ const ProductsPage = () => {
         (product.title?.toLowerCase().includes(searchLower)) ||
         product.id.toString().includes(searchTerm);
       
-      // Category filter - check if categoryFilter is set
-      let matchesCategory = true;
-      if (categoryFilter !== null && categoryFilter !== undefined) {
-        // Valesco uses 'category' object, GPG uses 'categoryId'
-        let productCategoryId: number | null = null;
-        
-        if (auth?.site === 'valesco') {
+      // Filter logic based on site
+      let matchesFilter = true;
+      
+      if (auth?.site === 'gpg') {
+        // GPG: Filter by brandId
+        if (brandFilter !== null && brandFilter !== undefined) {
+          const filterBrandId = Number(brandFilter);
+          matchesFilter = product.brandId === filterBrandId;
+        }
+      } else {
+        // Valesco: Filter by categoryId
+        if (categoryFilter !== null && categoryFilter !== undefined) {
+          let productCategoryId: number | null = null;
+          
           // Valesco: category is an object with id
           productCategoryId = product.category?.id 
             ? Number(product.category.id) 
             : (product.categoryId ? Number(product.categoryId) : null);
-        } else {
-          // GPG: categoryId is a number
-          productCategoryId = product.categoryId ? Number(product.categoryId) : null;
+          
+          const filterCategoryId = Number(categoryFilter);
+          matchesFilter = productCategoryId === filterCategoryId;
         }
-        
-        const filterCategoryId = Number(categoryFilter);
-        matchesCategory = productCategoryId === filterCategoryId;
       }
       
-      return matchesSearch && matchesCategory;
+      return matchesSearch && matchesFilter;
     })
     .sort((a: Product, b: Product) => {
       if (sortBy === 'id') return a.id - b.id;
@@ -242,29 +246,54 @@ const ProductsPage = () => {
             <Filter className="w-5 h-5 text-gray-500" />
             <span className="text-sm font-medium text-gray-700">Filtr:</span>
           </div>
-          <select
-            value={categoryFilter || ''}
-            onChange={(e) => {
-              const value = e.target.value;
-              setCategoryFilter(value ? parseInt(value) : null);
-            }}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white text-gray-900"
-            disabled={categoriesLoading}
-          >
-            <option value="">Barcha kategoriyalar</option>
-            {categories.length > 0 ? (
-              categories.map((cat: any) => {
-                const catName = cat.nameRu || cat.name || cat.nameEn || cat.title?.ru || cat.title?.en || `Kategoriya ${cat.id}`;
-                return (
-                  <option key={cat.id} value={cat.id}>
-                    {catName}
-                  </option>
-                );
-              })
-            ) : (
-              <option value="" disabled>Kategoriyalar yuklanmoqda...</option>
-            )}
-          </select>
+          {auth?.site === 'gpg' ? (
+            <select
+              value={brandFilter || ''}
+              onChange={(e) => {
+                const value = e.target.value;
+                setBrandFilter(value ? parseInt(value) : null);
+              }}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white text-gray-900"
+            >
+              <option value="">Barcha brendlar</option>
+              {brands.length > 0 ? (
+                brands.map((brand: Brand) => {
+                  const brandName = brand.nameRu || brand.name || brand.nameEn || `Brend ${brand.id}`;
+                  return (
+                    <option key={brand.id} value={brand.id}>
+                      {brandName}
+                    </option>
+                  );
+                })
+              ) : (
+                <option value="" disabled>Brendlar topilmadi</option>
+              )}
+            </select>
+          ) : (
+            <select
+              value={categoryFilter || ''}
+              onChange={(e) => {
+                const value = e.target.value;
+                setCategoryFilter(value ? parseInt(value) : null);
+              }}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white text-gray-900"
+              disabled={categoriesLoading}
+            >
+              <option value="">Barcha kategoriyalar</option>
+              {categories.length > 0 ? (
+                categories.map((cat: any) => {
+                  const catName = cat.nameRu || cat.name || cat.nameEn || cat.title?.ru || cat.title?.en || `Kategoriya ${cat.id}`;
+                  return (
+                    <option key={cat.id} value={cat.id}>
+                      {catName}
+                    </option>
+                  );
+                })
+              ) : (
+                <option value="" disabled>Kategoriyalar yuklanmoqda...</option>
+              )}
+            </select>
+          )}
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as 'id' | 'name')}
@@ -332,12 +361,15 @@ const ProductsPage = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Nomi
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Kategoriya
-                  </th>
-                  {auth?.site === 'gpg' && (
+                  {auth?.site === 'gpg' ? (
+                    <>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Brend
+                      </th>
+                    </>
+                  ) : (
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Brend
+                      Kategoriya
                     </th>
                   )}
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -350,13 +382,25 @@ const ProductsPage = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredProducts.map((product: Product) => {
-                  // Valesco uses category object, GPG uses categoryId
+                  // Valesco uses category object, GPG uses brandId
                   const productCategoryId = auth?.site === 'valesco' 
                     ? (product.category?.id || product.categoryId)
-                    : product.categoryId;
-                  const category = categories.find((c: any) => c.id === productCategoryId);
+                    : null;
+                  const category = auth?.site === 'valesco' 
+                    ? categories.find((c: any) => c.id === productCategoryId)
+                    : null;
                   const brand = auth?.site === 'gpg' ? brands.find((b: Brand) => b.id === product.brandId) : null;
                   const isSelected = selectedProducts.includes(product.id);
+                  
+                  // Handle image URLs
+                  const productImages = product.images || product.image || [];
+                  const firstImage = Array.isArray(productImages) ? productImages[0] : productImages;
+                  const imageUrl = firstImage 
+                    ? (firstImage.startsWith('http') || firstImage.startsWith('/') 
+                        ? firstImage 
+                        : `${auth?.site === 'gpg' ? 'https://gpg-backend-vgrz.onrender.com' : 'https://backend.valescooil.com'}/upload/products/${firstImage}`)
+                    : null;
+                  
                   return (
                     <tr key={product.id} className={`hover:bg-gray-50 ${isSelected ? 'bg-primary-50' : ''}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -386,20 +430,26 @@ const ProductsPage = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {category ? (category.nameRu || category.name || category.nameEn || category.title?.ru || category.title?.en) : '-'}
-                      </td>
-                      {auth?.site === 'gpg' && (
+                      {auth?.site === 'gpg' ? (
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {brand ? (brand.nameRu || brand.name || brand.nameEn) : '-'}
                         </td>
+                      ) : (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {category ? (category.nameRu || category.name || category.nameEn || category.title?.ru || category.title?.en) : '-'}
+                        </td>
                       )}
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {product.images?.[0] || product.image?.[0] ? (
+                        {imageUrl ? (
                           <img
-                            src={product.images?.[0] || product.image?.[0]}
+                            src={imageUrl}
                             alt="Product"
                             className="w-12 h-12 object-cover rounded"
+                            onError={(e) => {
+                              if (!firstImage?.startsWith('http')) {
+                                (e.target as HTMLImageElement).src = firstImage || '';
+                              }
+                            }}
                           />
                         ) : (
                           <span className="text-gray-400">-</span>
