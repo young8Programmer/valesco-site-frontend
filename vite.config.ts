@@ -14,7 +14,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api/gpg': {
-        target: 'https://gpg-backend.zeabur.app',
+        target: 'https://gpg-backend-vgrz.onrender.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/gpg/, ''),
       },
