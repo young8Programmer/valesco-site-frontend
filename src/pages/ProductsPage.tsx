@@ -57,8 +57,9 @@ const ProductsPage = () => {
         toast.success('Mahsulot o\'chirildi');
         setSelectedProducts([]);
       },
-      onError: () => {
-        toast.error('Xatolik yuz berdi');
+      onError: (error: any) => {
+        const errorMessage = error.response?.data?.message || 'Xatolik yuz berdi';
+        toast.error(errorMessage);
       },
     }
   );
@@ -73,8 +74,9 @@ const ProductsPage = () => {
         toast.success(`${selectedProducts.length} ta mahsulot o'chirildi`);
         setSelectedProducts([]);
       },
-      onError: () => {
-        toast.error('Xatolik yuz berdi');
+      onError: (error: any) => {
+        const errorMessage = error.response?.data?.message || 'Xatolik yuz berdi';
+        toast.error(errorMessage);
       },
     }
   );

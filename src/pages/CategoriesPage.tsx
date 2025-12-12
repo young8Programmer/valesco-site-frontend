@@ -33,8 +33,9 @@ const CategoriesPage = () => {
         toast.success('Kategoriya o\'chirildi');
         setSelectedCategories([]);
       },
-      onError: () => {
-        toast.error('Xatolik yuz berdi');
+      onError: (error: any) => {
+        const errorMessage = error.response?.data?.message || 'Xatolik yuz berdi';
+        toast.error(errorMessage);
       },
     }
   );
@@ -49,8 +50,9 @@ const CategoriesPage = () => {
         toast.success(`${selectedCategories.length} ta kategoriya o'chirildi`);
         setSelectedCategories([]);
       },
-      onError: () => {
-        toast.error('Xatolik yuz berdi');
+      onError: (error: any) => {
+        const errorMessage = error.response?.data?.message || 'Xatolik yuz berdi';
+        toast.error(errorMessage);
       },
     }
   );

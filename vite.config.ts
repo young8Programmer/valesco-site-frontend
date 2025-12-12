@@ -14,7 +14,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api/gpg': {
-        target: 'https://gpg-backend-vgrz.onrender.com',
+        target: 'http://103.125.219.167:3000/',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/gpg/, ''),
       },
